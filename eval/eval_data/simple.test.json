@@ -1,19 +1,39 @@
 [
   {
-    "query": "hi,",
-    "expected_tool_use": [],
-    "reference": "Hi there! Welcome back to Cymbal Home & Garden! I see you're a returning customer. How can I help you make your home and garden even better today"
-  },
-  {
-    "query": "tell me what is in my cart?",
+    "query": "Show me my past orders",
     "expected_tool_use": [
       {
-        "tool_name": "access_cart_information",
+        "tool_name": "get_order_history",
         "tool_input": {
           "customer_id": "123"
         }
       }
     ],
-    "reference": "you have one bag of Standard Potting Soil and one container of General Purpose Fertilizer in your cart"
+    "reference": "Here's your complete order history with all your past purchases."
+  },
+  {
+    "query": "What payment methods do I have saved?",
+    "expected_tool_use": [
+      {
+        "tool_name": "get_payment_methods",
+        "tool_input": {
+          "customer_id": "123"
+        }
+      }
+    ],
+    "reference": "Here are the payment methods saved on your account."
+  },
+  {
+    "query": "Is product soil-123 available?",
+    "expected_tool_use": [
+      {
+        "tool_name": "check_item_availability",
+        "tool_input": {
+          "product_id": "soil-123",
+          "quantity": 1
+        }
+      }
+    ],
+    "reference": "Let me check the availability of that product for you."
   }
 ]

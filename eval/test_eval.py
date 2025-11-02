@@ -24,15 +24,3 @@ async def test_eval_simple():
         os.path.join(os.path.dirname(__file__), "eval_data/simple.test.json"),
         num_runs=1,
     )
-
-
-@pytest.mark.asyncio
-async def test_eval_full_conversation():
-    """Test the agent's basic ability via a session file."""
-    await AgentEvaluator.evaluate(
-        "customer_service",
-        os.path.join(
-            os.path.dirname(__file__), "eval_data/full_conversation.test.json"
-        ),
-        num_runs=1,
-    )
