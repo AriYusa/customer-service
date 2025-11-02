@@ -16,7 +16,6 @@ from ..datamodels.account import (
     Order,
     PaymentMethod,
     SubscriptionPreferences,
-    VerificationMethod,
 )
 
 
@@ -31,7 +30,7 @@ def _get_customer_record(customer_id: str) -> CustomerRecord | None:
         )
         customer = cursor.fetchone()
         if not customer:
-            return None
+            raise ValueError(f"Customer {customer_id} not found or account deleted")
 
         # Get addresses
         cursor.execute("SELECT * FROM addresses WHERE customer_id = ?", (customer_id,))
@@ -43,16 +42,34 @@ def _get_customer_record(customer_id: str) -> CustomerRecord | None:
         )
         payment_methods = [PaymentMethod(**pm) for pm in cursor.fetchall()]
 
-        # Get orders
+        # Get orders with items
         cursor.execute("SELECT * FROM orders WHERE customer_id = ?", (customer_id,))
         orders = []
         for order in cursor.fetchall():
-            items = json.loads(order["items"])
+            # Fetch order items from order_items and products tables
+            cursor.execute("""
+                SELECT oi.product_id, p.name, oi.quantity, p.unit_price
+                FROM order_items oi
+                JOIN products p ON oi.product_id = p.id
+                WHERE oi.order_id = ?
+            """, (order["id"],))
+            
+            items = [
+                {
+                    "product_id": item["product_id"],
+                    "name": item["name"],
+                    "quantity": item["quantity"],
+                    "unit_price": item["unit_price"]
+                }
+                for item in cursor.fetchall()
+            ]
+            
             orders.append(
                 Order(
                     id=order["id"],
                     date=order["date"],
                     total=order["total"],
+                    status=order["status"],
                     items=items,
                 )
             )
@@ -66,7 +83,6 @@ def _get_customer_record(customer_id: str) -> CustomerRecord | None:
             payment_methods=payment_methods,
             # orders=orders,
             loyalty=LoyaltyBalance(**json.loads(customer["loyalty"])),
-            preferences=json.loads(customer["preferences"]),
             subscriptions=json.loads(customer["subscriptions"]),
             locked=customer["locked"],
             deleted=customer["deleted"],
@@ -126,16 +142,15 @@ def update_email(customer_id: str, new_email: str) -> bool:
         return cursor.rowcount > 0
 
 
-def manage_addresses(
-    customer_id: str, action: AddressAction, address_data: AddressData | None = None
-) -> bool:
-    """Manage addresses for a customer.
+def add_address(customer_id: str, address_data: AddressData) -> dict:
+    """Add a new address for a customer.
 
-    action: 'add', 'update', 'delete', 'list'
-    For 'add' provide address_data (fields for Address except id).
-    For 'update' provide address_data with 'id' and fields to update.
-    For 'delete' provide address_data with 'id'.
-    For 'list' address_data is ignored and returns True (addresses kept in DB).
+    Args:
+        customer_id: The ID of the customer account
+        address_data: Address information including line1, city, state, etc.
+
+    Returns:
+        dict with 'success' (bool) and 'address_id' (str) if successful, empty string if failed
     """
     with database.get_db() as conn:
         cursor = conn.cursor()
@@ -145,49 +160,107 @@ def manage_addresses(
             "SELECT 1 FROM customers WHERE id = ? AND deleted = FALSE", (customer_id,)
         )
         if not cursor.fetchone():
-            return False
+            return {"success": False, "address_id": ""}
 
-        action = action.lower()
-        if action == "add" and address_data:
-            aid = address_data.get("id") or f"addr-{uuid.uuid4()}"
-            fields = {k: v for k, v in address_data.items() if k != "id"}
-            fields["customer_id"] = customer_id
-            fields["id"] = aid
+        address_id = f"addr-{uuid.uuid4()}"
+        cursor.execute(
+            """
+            INSERT INTO addresses (id, customer_id, line1, line2, city, state, postal_code, country)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                address_id,
+                customer_id,
+                address_data.line1,
+                address_data.line2 or "",
+                address_data.city or "",
+                address_data.state or "",
+                address_data.postal_code or "",
+                address_data.country or "",
+            ),
+        )
+        conn.commit()
+        return {"success": True, "address_id": address_id}
 
-            placeholders = ", ".join("?" * len(fields))
-            columns = ", ".join(fields.keys())
-            values = tuple(fields.values())
 
-            cursor.execute(
-                f"INSERT INTO addresses ({columns}) VALUES ({placeholders})", values
-            )
-            return True
+def update_address(customer_id: str, address_id: str, address_data: AddressData) -> bool:
+    """Update an existing address for a customer.
 
-        elif action == "update" and address_data and "id" in address_data:
-            updates = {k: v for k, v in address_data.items() if k != "id"}
-            if not updates:
-                return False
+    Args:
+        customer_id: The ID of the customer account
+        address_id: The ID of the address to update
+        address_data: Updated address information
 
-            set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
-            values = (*updates.values(), address_data["id"], customer_id)
+    Returns:
+        bool: True if address was updated successfully, False otherwise
+    """
+    with database.get_db() as conn:
+        cursor = conn.cursor()
 
-            cursor.execute(
-                f"UPDATE addresses SET {set_clause} WHERE id = ? AND customer_id = ?",
-                values,
-            )
-            return cursor.rowcount > 0
+        cursor.execute(
+            """
+            UPDATE addresses 
+            SET line1 = ?, line2 = ?, city = ?, state = ?, postal_code = ?, country = ?
+            WHERE id = ? AND customer_id = ?
+            """,
+            (
+                address_data.line1,
+                address_data.line2 or "",
+                address_data.city or "",
+                address_data.state or "",
+                address_data.postal_code or "",
+                address_data.country or "",
+                address_id,
+                customer_id,
+            ),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
 
-        elif action == "delete" and address_data and "id" in address_data:
-            cursor.execute(
-                "DELETE FROM addresses WHERE id = ? AND customer_id = ?",
-                (address_data["id"], customer_id),
-            )
-            return cursor.rowcount > 0
 
-        elif action == "list":
-            return True
+def delete_address(customer_id: str, address_id: str) -> bool:
+    """Delete an address for a customer.
 
-        return False
+    Args:
+        customer_id: The ID of the customer account
+        address_id: The ID of the address to delete
+
+    Returns:
+        bool: True if address was deleted successfully, False otherwise
+    """
+    with database.get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "DELETE FROM addresses WHERE id = ? AND customer_id = ?",
+            (address_id, customer_id),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+
+
+def list_addresses(customer_id: str) -> list[Address]:
+    """List all addresses for a customer.
+
+    Args:
+        customer_id: The ID of the customer account
+
+    Returns:
+        list[Address]: List of all addresses for the customer. Empty list if customer not found or has no addresses.
+    """
+    with database.get_db() as conn:
+        cursor = conn.cursor()
+        
+        # Check if customer exists and is not deleted
+        cursor.execute(
+            "SELECT 1 FROM customers WHERE id = ? AND deleted = FALSE", (customer_id,)
+        )
+        if not cursor.fetchone():
+            return []
+        
+        # Get all addresses for the customer
+        cursor.execute("SELECT * FROM addresses WHERE customer_id = ?", (customer_id,))
+        addresses = [Address(**addr) for addr in cursor.fetchall()]
+        return addresses
 
 
 def get_loyalty_balance(customer_id: str) -> LoyaltyBalance:
@@ -232,6 +305,7 @@ def delete_account(customer_id: str, confirmation: bool) -> bool:
         cursor.execute(
             "UPDATE customers SET deleted = TRUE WHERE id = ?", (customer_id,)
         )
+        conn.commit()
         return cursor.rowcount > 0
 
 
@@ -251,31 +325,32 @@ def unlock_account(customer_id: str) -> bool:
             "UPDATE customers SET locked = FALSE WHERE id = ? AND deleted = FALSE",
             (customer_id,),
         )
+        conn.commit()
         return cursor.rowcount > 0
 
 
-def verify_identity(
-    customer_id: str, verification_method: VerificationMethod = "sms"
-) -> bool:
-    """Verify customer's identity using specified method.
+# def verify_identity(
+#     customer_id: str, verification_method: VerificationMethod = "sms"
+# ) -> bool:
+#     """Verify customer's identity using specified method.
 
-    Args:
-        customer_id: The ID of the customer account
-        verification_method: Method to use for verification: 'sms', 'email', or 'knowledge'
+#     Args:
+#         customer_id: The ID of the customer account
+#         verification_method: Method to use for verification: 'sms', 'email', or 'knowledge'
 
-    Returns:
-        bool: True if identity verified successfully, False if customer not found,
-        account deleted, or invalid verification method
-    """
-    with database.get_db() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT 1 FROM customers WHERE id = ? AND deleted = FALSE", (customer_id,)
-        )
-        if not cursor.fetchone():
-            return False
-        # In a real system we'd call an identity provider. Here we fake success.
-        return verification_method in {"sms", "email", "knowledge"}
+#     Returns:
+#         bool: True if identity verified successfully, False if customer not found,
+#         account deleted, or invalid verification method
+#     """
+#     with database.get_db() as conn:
+#         cursor = conn.cursor()
+#         cursor.execute(
+#             "SELECT 1 FROM customers WHERE id = ? AND deleted = FALSE", (customer_id,)
+#         )
+#         if not cursor.fetchone():
+#             return False
+#         # In a real system we'd call an identity provider. Here we fake success.
+#         return verification_method in {"sms", "email", "knowledge"}
 
 
 def manage_email_subscriptions(
@@ -298,6 +373,7 @@ def manage_email_subscriptions(
             "UPDATE customers SET subscriptions = ? WHERE id = ? AND deleted = FALSE",
             (json.dumps(preferences), customer_id),
         )
+        conn.commit()
         return cursor.rowcount > 0
 
 
@@ -321,4 +397,5 @@ def update_communication_preferences(
             "UPDATE customers SET communication_preferences = ? WHERE id = ? AND deleted = FALSE",
             (json.dumps(preferences), customer_id),
         )
+        conn.commit()
         return cursor.rowcount > 0

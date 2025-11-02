@@ -23,12 +23,14 @@ from customer_service.shared_libraries.callbacks import (
 from customer_service.tools.account_management import (
     delete_account,
     get_loyalty_balance,
-    manage_addresses,
+    add_address,
+    update_address,
+    delete_address,
+    list_addresses,
     manage_email_subscriptions,
     reset_password,
     unlock_account,
     update_email,
-    verify_identity,
 )
 
 DESCRIPTION = "Manages customer accounts: views/updates profiles, addresses, preferences, loyalty status, and related account operations."
@@ -44,11 +46,13 @@ Always confirm with the customer before performing updates.
 TOOLS = [
     reset_password,
     update_email,
-    manage_addresses,
+    add_address,
+    update_address,
+    delete_address,
+    list_addresses,
     get_loyalty_balance,
     delete_account,
     unlock_account,
-    verify_identity,
     manage_email_subscriptions,
 ]
 

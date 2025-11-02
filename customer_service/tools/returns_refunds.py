@@ -84,39 +84,6 @@ def check_return_eligibility(order_id: str, product_id: str) -> ReturnEligibilit
     )
 
 
-def track_return(return_id: str) -> ReturnTrackingInfo:
-    """Track the status of a return request.
-
-    Args:
-        return_id: The unique return request identifier
-
-    Returns:
-        ReturnTrackingInfo with tracking details
-    """
-    # Mock return tracking
-    return ReturnTrackingInfo(
-        return_id=return_id,
-        status="in_transit",
-        tracking_number=f"RETURN{return_id[-8:].upper()}",
-        current_location="In transit to return center",
-        received_date=None,
-        refund_status="pending",
-        refund_amount=0.0,
-        history=[
-            ReturnStatusEvent(
-                date="2025-10-24",
-                status="Return initiated",
-                description="Return label created",
-            ),
-            ReturnStatusEvent(
-                date="2025-10-25",
-                status="Package picked up",
-                description="Return package in transit",
-            ),
-        ],
-    )
-
-
 def cancel_return(return_id: str) -> ReturnCancellationResult:
     """Cancel a return request.
 

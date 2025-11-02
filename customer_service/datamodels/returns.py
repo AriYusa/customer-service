@@ -41,7 +41,7 @@ class ReturnTrackingInfo(BaseModel):
     status: str
     tracking_number: str
     current_location: str
-    received_date: str | None
+    received_date: str = ""
     refund_status: str
     refund_amount: float
     history: list[ReturnStatusEvent]

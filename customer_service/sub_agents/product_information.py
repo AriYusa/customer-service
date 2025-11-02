@@ -16,11 +16,7 @@ from customer_service.shared_libraries.callbacks import (
 )
 from customer_service.tools.product_information import (
     check_item_availability,
-    check_product_availability,
-    compare_products,
-    get_product_details,
-    get_product_specifications,
-    search_products,
+    get_product_details, 
 )
 
 DESCRIPTION = "Provides product information: search products, check availability, and view specifications."
@@ -34,11 +30,7 @@ Provide honest information from reviews, both positive and negative aspects.
 """
 
 TOOLS = [
-    search_products,
     get_product_details,
-    compare_products,
-    check_product_availability,
-    get_product_specifications,
     check_item_availability,
 ]
 

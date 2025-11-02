@@ -34,8 +34,9 @@ configs = Config()
 # configure logging __name__
 logger = logging.getLogger(__name__)
 
-# Initialize the database
+# Initialize database and sample data explicitly
 database.init_db()
+database.populate_sample_data()
 
 langfuse = get_client()
 # Verify connection

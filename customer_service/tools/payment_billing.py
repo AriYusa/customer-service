@@ -40,10 +40,9 @@ def remove_payment_method(
             return PaymentMethodResult(
                 success=True,
                 message="Payment method removed successfully",
-                payment_method_id=None,
             )
         return PaymentMethodResult(
-            success=False, message="Payment method not found", payment_method_id=None
+            success=False, message="Payment method not found"
         )
 
 
@@ -101,7 +100,7 @@ def process_refund(
         )
 
 
-def get_invoice(order_id: str) -> Invoice | None:
+def get_invoice(order_id: str) -> Invoice:
     """Retrieve invoice details for an order.
 
     Args:
@@ -116,9 +115,26 @@ def get_invoice(order_id: str) -> Invoice | None:
         order = cursor.fetchone()
 
         if not order:
-            return None
+            return {}
 
-        items = json.loads(order["items"])
+        # Fetch order items from order_items and products tables
+        cursor.execute("""
+            SELECT oi.product_id, p.name, oi.quantity, p.unit_price
+            FROM order_items oi
+            JOIN products p ON oi.product_id = p.id
+            WHERE oi.order_id = ?
+        """, (order_id,))
+        
+        items = [
+            {
+                "product_id": item["product_id"],
+                "name": item["name"],
+                "quantity": item["quantity"],
+                "unit_price": item["unit_price"]
+            }
+            for item in cursor.fetchall()
+        ]
+        
         subtotal = order["total"] * 0.85  # Mock calculation
         tax = order["total"] * 0.10
         shipping = order["total"] * 0.05

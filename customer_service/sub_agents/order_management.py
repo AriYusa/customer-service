@@ -17,11 +17,9 @@ from customer_service.shared_libraries.callbacks import (
 from customer_service.tools.order_management import (
     cancel_order,
     change_delivery_address,
-    estimate_delivery,
     get_order_details,
     get_order_history,
-    modify_order,
-    track_order,
+    modify_order_list,
 )
 
 DESCRIPTION = "Manages and views orders: tracks shipments, cancels or modifies orders, checks delivery estimates."
@@ -34,13 +32,11 @@ Inform customers about any fees or restrictions related to order modifications.
 """
 
 TOOLS = [
-    track_order,
     cancel_order,
-    modify_order,
     get_order_details,
-    estimate_delivery,
     change_delivery_address,
     get_order_history,
+    modify_order_list,
 ]
 
 

@@ -2,9 +2,20 @@
 
 from __future__ import annotations
 
+from enum import Enum
+
 from pydantic import BaseModel
 
-from .account import OrderItem
+from .account import OrderItemWithInfo
+
+
+class OrderStatus(str, Enum):
+    """Order status enum."""
+    
+    PROCESSING = "processing"
+    SHIPPED = "shipped"
+    DELIVERED = "delivered"
+    CANCELLED = "cancelled"
 
 
 class TrackingEvent(BaseModel):
@@ -32,7 +43,6 @@ class OrderCancellationResult(BaseModel):
     success: bool
     message: str
     refund_amount: float
-    refund_eta: str
 
 
 class OrderModificationResult(BaseModel):
@@ -41,18 +51,6 @@ class OrderModificationResult(BaseModel):
     success: bool
     message: str
     updated_total: float
-
-
-class OrderDetails(BaseModel):
-    """Detailed order information."""
-
-    id: str
-    date: str
-    status: str
-    items: list[OrderItem]
-    total: float
-    shipping_address: str
-    payment_method: str
 
 
 class ShippingOption(BaseModel):
@@ -84,5 +82,5 @@ class ReorderResult(BaseModel):
 
     success: bool
     new_order_id: str
-    items: list[OrderItem]
+    items: list[OrderItemWithInfo]
     total: float

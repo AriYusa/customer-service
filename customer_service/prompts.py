@@ -3,11 +3,18 @@
 from customer_service.database.database import DEFAULT_CUSTOMER_ID
 from customer_service.tools.account_management import _get_customer_record
 
-GLOBAL_INSTRUCTION = f"""
-The profile of the current customer is:  {_get_customer_record(DEFAULT_CUSTOMER_ID).model_dump_json()}.
+
+def get_global_instruction() -> str:
+    """Generate global instruction with current customer data."""
+    customer_data = _get_customer_record(DEFAULT_CUSTOMER_ID).model_dump_json()
+    return f"""
+The profile of the current customer is: {customer_data}.
 
 If you need more information about the customer's account, orders, payments, products, returns, or technical issues, you can route the request to coordinator agent.
 """
+
+
+GLOBAL_INSTRUCTION = get_global_instruction()
 
 INSTRUCTION = """
 You are a part of AI customer service agent for "All Time Sound", a e-commerce retailer specializing on vinyl and CD records, merchandise, and high-quality vinyl and CD protection products.

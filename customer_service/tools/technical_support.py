@@ -330,8 +330,8 @@ def report_bug(
     customer_id: str,
     description: str,
     steps_to_reproduce: list[str],
+    attachments: list[str],
     severity: str = "medium",
-    attachments: list[str] | None = None,
 ) -> BugReportResult:
     """Report a software bug or technical issue.
 
@@ -399,7 +399,7 @@ def get_ticket_status(ticket_id: str) -> TicketStatus:
         last_updated="2025-10-25T14:22:00",
         assigned_to="Sarah from Technical Support",
         responses=2,
-        resolution=None,
+        resolution="",
     )
 
 

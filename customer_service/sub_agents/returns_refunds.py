@@ -23,7 +23,6 @@ from customer_service.tools.returns_refunds import (
     initiate_return,
     request_exchange,
     request_store_credit,
-    track_return,
 )
 
 DESCRIPTION = "Processes returns and refunds: initiates returns, tracks return status, checks eligibility, handles exchanges, provides store credit options, and explains policies."
@@ -40,7 +39,6 @@ Be empathetic and understanding about customer concerns.
 TOOLS = [
     initiate_return,
     check_return_eligibility,
-    track_return,
     cancel_return,
     request_exchange,
     get_refund_status,

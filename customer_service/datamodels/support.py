@@ -92,7 +92,7 @@ class TicketStatus(BaseModel):
     last_updated: str
     assigned_to: str
     responses: int
-    resolution: str | None
+    resolution: str
 
 
 class TicketUpdateResult(BaseModel):

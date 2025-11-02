@@ -4,36 +4,48 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class ProfileData(BaseModel):
     first_name: str
     last_name: str
-    phone: str | None = None
-    birthdate: str | None = None
-    account_number: str | None = None
-    customer_start_date: str | None = None
+    phone: str = ""
+    birthdate: str = ""
+    account_number: str = ""
+    customer_start_date: str = ""
+    
+    @field_validator('phone', 'birthdate', 'account_number', 'customer_start_date', mode='before')
+    @classmethod
+    def convert_none_to_empty(cls, v):
+        return v if v is not None else ""
 
 
 class OrderItem(BaseModel):
     product_id: str
-    name: str
     quantity: int
-    unit_price: float | None = None
+
+class OrderItemWithInfo(OrderItem):
+    name: str
+    unit_price: float
 
 
-class UserPreferences(BaseModel):
-    language: str
-    currency: str
-    notifications: bool | None = None
-    time_zone: str | None = None
+# class UserPreferences(BaseModel):
+#     language: str
+#     currency: str
+#     notifications: bool | None = None
+#     time_zone: str | None = None
 
 
 class SubscriptionPreferences(BaseModel):
     marketing: bool
-    newsletters: bool | None = None
-    product_updates: bool | None = None
+    newsletters: bool = False
+    product_updates: bool = False
+    
+    @field_validator('newsletters', 'product_updates', mode='before')
+    @classmethod
+    def convert_none_to_false(cls, v):
+        return v if v is not None else False
 
 
 class ResetPasswordResponse(BaseModel):
@@ -46,30 +58,32 @@ class PaymentInfo(BaseModel):
     last4: str
     exp_month: int
     exp_year: int
-    token: str | None = None
+    token: str = ""
+    
+    @field_validator('token', mode='before')
+    @classmethod
+    def convert_none_to_empty(cls, v):
+        return v if v is not None else ""
 
 
 class AddressData(BaseModel):
     line1: str
-    line2: str | None = None
-    city: str | None = None
-    state: str | None = None
-    postal_code: str | None = None
-    country: str | None = None
+    line2: str = ""
+    city: str = ""
+    state: str = ""
+    postal_code: str
+    country: str = ""
 
+    @field_validator('line2', 'city', 'state', 'postal_code', 'country', mode='before')
+    @classmethod
+    def convert_none_to_empty(cls, v):
+        return v if v is not None else ""
+
+class Address(AddressData):
+    id: str
 
 AddressAction = Literal["add", "update", "delete", "list"]
 VerificationMethod = Literal["sms", "email", "knowledge"]
-
-
-class Address(BaseModel):
-    id: str
-    line1: str
-    line2: str | None = None
-    city: str | None = None
-    state: str | None = None
-    postal_code: str | None = None
-    country: str | None = None
 
 
 class PaymentMethod(BaseModel):
@@ -78,14 +92,22 @@ class PaymentMethod(BaseModel):
     last4: str
     exp_month: int
     exp_year: int
-    token: str | None = None
+    token: str = ""
+
+    @field_validator('token', mode='before')
+    @classmethod
+    def convert_none_to_empty(cls, v):
+        return v if v is not None else ""
 
 
 class Order(BaseModel):
     id: str
     date: str
     total: float
-    items: list[OrderItem] = []
+    status: str = "processing"
+    items: list[OrderItemWithInfo] = []
+    shipping_address: str = ""
+    payment_method: str = ""
 
 
 class LoyaltyBalance(BaseModel):
@@ -102,7 +124,7 @@ class CustomerRecord(BaseModel):
     payment_methods: list[PaymentMethod] = []
     orders: list[Order] = []
     loyalty: LoyaltyBalance = LoyaltyBalance()
-    preferences: UserPreferences = UserPreferences(language="en", currency="USD")
+    # preferences: UserPreferences = UserPreferences(language="en", currency="USD")
     subscriptions: SubscriptionPreferences = {"marketing": True}
     locked: bool = False
     deleted: bool = False

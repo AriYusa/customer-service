@@ -10,8 +10,7 @@ class PaymentMethodResult(BaseModel):
 
     success: bool
     message: str
-    payment_method_id: str | None = None
-
+    payment_method_id: str = ""
 
 class RefundResult(BaseModel):
     """Result of refund processing."""
@@ -29,7 +28,7 @@ class Invoice(BaseModel):
     invoice_id: str
     order_id: str
     date: str
-    items: list[dict]  # OrderItem dict representation
+    items: list[dict]  # OrderItemWithInfo dict representation
     subtotal: float
     tax: float
     shipping: float

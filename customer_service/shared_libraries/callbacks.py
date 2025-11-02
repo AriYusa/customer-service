@@ -1,9 +1,10 @@
 
 """Callback functions for FOMC Research Agent."""
 
+import inspect
 import logging
 import time
-from typing import Any
+from typing import Any, get_type_hints
 
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.invocation_context import InvocationContext
@@ -12,6 +13,7 @@ from google.adk.sessions.state import State
 from google.adk.tools import BaseTool
 from google.adk.tools.tool_context import ToolContext
 from jsonschema import ValidationError
+from pydantic import BaseModel
 
 from customer_service.database.database import DEFAULT_CUSTOMER_ID
 from customer_service.tools.account_management import (
@@ -124,8 +126,101 @@ def lowercase_value(value):
         return value
 
 
+def convert_args_to_pydantic(tool: BaseTool, args: dict[str, Any]) -> dict[str, Any]:
+    """Convert dictionary arguments to Pydantic model instances where applicable.
+    
+    Args:
+        tool: The tool being called
+        args: The arguments passed by the model
+        
+    Returns:
+        dict[str, Any]: Arguments with Pydantic models converted from dicts
+    """
+    try:
+        # Get the underlying function from the tool
+        func = tool.func if hasattr(tool, 'func') else None
+        if func is None:
+            return args
+            
+        # Get type hints for the function
+        type_hints = get_type_hints(func)
+        
+        # Create a new args dict with converted values
+        converted_args = {}
+        for param_name, param_value in args.items():
+            if param_name in type_hints:
+                param_type = type_hints[param_name]
+                
+                # Check if the parameter type is a Pydantic model
+                if (
+                    isinstance(param_value, dict) 
+                    and inspect.isclass(param_type) 
+                    and issubclass(param_type, BaseModel)
+                ):
+                    try:
+                        # Convert dict to Pydantic model instance
+                        converted_args[param_name] = param_type(**param_value)
+                        logger.debug(
+                            f"Converted argument '{param_name}' to {param_type.__name__}"
+                        )
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to convert argument '{param_name}' to {param_type.__name__}: {e}"
+                        )
+                        converted_args[param_name] = param_value
+                # Handle list of Pydantic models
+                elif (
+                    isinstance(param_value, list) 
+                    and param_value
+                    and hasattr(param_type, '__origin__')
+                    and param_type.__origin__ is list
+                ):
+                    # Get the list item type
+                    list_item_type = param_type.__args__[0] if hasattr(param_type, '__args__') else None
+                    if (
+                        list_item_type 
+                        and inspect.isclass(list_item_type) 
+                        and issubclass(list_item_type, BaseModel)
+                    ):
+                        try:
+                            # Convert list of dicts to list of Pydantic model instances
+                            converted_list = []
+                            for item in param_value:
+                                if isinstance(item, dict):
+                                    converted_list.append(list_item_type(**item))
+                                else:
+                                    converted_list.append(item)
+                            converted_args[param_name] = converted_list
+                            logger.debug(
+                                f"Converted list argument '{param_name}' to list of {list_item_type.__name__}"
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                f"Failed to convert list argument '{param_name}' to list of {list_item_type.__name__}: {e}"
+                            )
+                            converted_args[param_name] = param_value
+                    else:
+                        converted_args[param_name] = param_value
+                else:
+                    converted_args[param_name] = param_value
+            else:
+                converted_args[param_name] = param_value
+                
+        return converted_args
+    except Exception as e:
+        logger.error(f"Error in convert_args_to_pydantic: {e}")
+        return args
+
+
 # Callback Methods
 def before_tool(tool: BaseTool, args: dict[str, Any], tool_context: CallbackContext):
+    # Convert any dict arguments to Pydantic model instances if the function expects them
+    converted_args = convert_args_to_pydantic(tool, args)
+    
+    # Update args with converted values
+    args.clear()
+    args.update(converted_args)
+    
     # i make sure all values that the agent is sending to tools are lowercase
     lowercase_value(args)
 
