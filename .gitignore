@@ -7,3 +7,5 @@ _tmp*
 .vscode/
 __pycache__/
 .venv/
+
+*.db
