@@ -2,7 +2,29 @@
 
 from __future__ import annotations
 
+from enum import Enum
+
 from pydantic import BaseModel
+
+
+# class IssueClass(str, Enum):
+#     """Types of issues from the wiki."""
+
+#     MANUFACTURING_DEFECT = "manufacturing_defect_or_shipping_damage"
+#     WRONG_ITEM = "wrong_item_received"
+#     MISSING_COMPONENTS = "missing_components"
+#     CHANGED_MIND = "changed_mind_sealed_unopened"
+#     OTHER = "other"
+
+
+# class Resolution(str, Enum):
+#     """Types of resolutions."""
+
+#     REFUND_WITHOUT_RETURN = "refund_without_return"
+#     REFUND_WITH_RETURN = "refund_with_return"
+#     REPLACEMENT_WITH_RETURN = "replacement_with_return"
+#     REPLACEMENT_WITHOUT_RETURN = "replacement_without_return"
+#     DECLINED = "declined"
 
 
 class ReturnInitiationResult(BaseModel):
@@ -125,3 +147,38 @@ class ReturnPolicy(BaseModel):
     non_returnable_items: list[str]
     exchange_policy: str
     contact_info: ContactInfo
+
+
+class AttachmentCheckResult(BaseModel):
+    """Result of checking customer attachments."""
+
+    has_attachments: bool
+    attachments_confirm_issue: bool
+    attachment_count: int
+    notes: str
+
+
+class InstantRefundResult(BaseModel):
+    """Result of instant refund processing."""
+
+    success: bool
+    customer_id: str
+    refund_amount: float
+    transaction_id: str
+    message: str
+
+
+class PrepaidLabelResult(BaseModel):
+    """Result of prepaid label creation."""
+
+    success: bool
+    customer_id: str
+    tracking_number: str
+    message: str
+
+
+class ReplacementOrderResult(BaseModel):
+    """Result of replacement order creation."""
+
+    success: bool
+    new_osrder_id: str

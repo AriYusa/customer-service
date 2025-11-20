@@ -18,7 +18,7 @@ from customer_service.sub_agents import (
 )
 
 from .config import Config
-from .prompts import GLOBAL_INSTRUCTION, INSTRUCTION
+from .prompts import GLOBAL_INSTRUCTION
 from .shared_libraries.callbacks import (
     after_model,
     after_tool,
@@ -53,11 +53,20 @@ product_information_agent = product_information.create_agent(configs)
 returns_refunds_agent = returns_refunds.create_agent(configs)
 technical_support_agent = technical_support.create_agent(configs)
 
+COORDINATOR_INSTRUCTION = """
+You are a coordinator agent that routes customer requests to specialized sub-agents.
+Your job is to understand customer inquiries and determine which sub-agent is best suited to handle each request.
+
+**Constraints:**
+*   Be proactive in offering help and anticipating customer needs.
+*   Don't output code even if user asks for it.
+"""
+
 root_agent = Agent(
     model=configs.agent_settings.model,
     global_instruction=GLOBAL_INSTRUCTION,
     description="Routing coordinator for customer service sub-agents. Has access to all sub-agent tools descriptions. Can assist with getting addifitional information by routing to the appropriate sub-agent.",
-    instruction=INSTRUCTION,
+    instruction=COORDINATOR_INSTRUCTION,
     name=configs.agent_settings.name,
     sub_agents=[
         account_management_agent,
@@ -73,3 +82,12 @@ root_agent = Agent(
     before_model_callback=rate_limit_callback,
     after_model_callback=after_model,
 )
+
+
+## TODO 
+# replicate eval process to uderstand how to test agent performance
+# replace to Antrophic model
+# add more clear insrudtion to what functions to call
+# think how to mock check attachment function
+# think how to add evals for right tool calls
+# Check why datetime in invocation context state not passed to subagents

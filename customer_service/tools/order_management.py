@@ -35,7 +35,7 @@ def get_order_history(customer_id: str) -> list[Order]:
             return []
 
         cursor.execute(
-            "SELECT * FROM orders WHERE customer_id = ? ORDER BY date DESC",
+            "SELECT * FROM orders WHERE customer_id = ? ORDER BY date_ordered DESC",
             (customer_id,),
         )
         orders = []
@@ -61,7 +61,8 @@ def get_order_history(customer_id: str) -> list[Order]:
             orders.append(
                 Order(
                     id=order["id"],
-                    date=order["date"],
+                    date_ordered=order["date_ordered"],
+                    date_delivered=order.get("date_delivered", ""),
                     total=order["total"],
                     status=order["status"],
                     items=items,
@@ -70,7 +71,7 @@ def get_order_history(customer_id: str) -> list[Order]:
         return orders
 
 
-def get_order_details(order_id: str) -> dict:
+def get_order_details(customer_id: str, order_id: str) -> dict:
     """Get detailed information about a specific order.
 
     Args:
@@ -81,7 +82,7 @@ def get_order_details(order_id: str) -> dict:
     """
     with database.get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM orders WHERE id = ?", (order_id,))
+        cursor.execute("SELECT * FROM orders WHERE id = ? and customer_id = ?", (order_id, customer_id))
         order = cursor.fetchone()
 
         if not order:
@@ -107,7 +108,8 @@ def get_order_details(order_id: str) -> dict:
 
         order = Order(
             id=order["id"],
-            date=order["date"],
+            date_ordered=order["date_ordered"],
+            date_delivered=order.get("date_delivered", ""),
             status=order["status"],
             items=order_items,
             total=order["total"],

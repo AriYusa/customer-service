@@ -272,8 +272,9 @@ def before_agent(callback_context: InvocationContext):
         callback_context.state["customer_profile"] = _get_customer_record(
             DEFAULT_CUSTOMER_ID
         ).model_dump_json()
-        # logger.info(callback_context.state["customer_profile"])
-
+        callback_context.state["datetime_now"] = time.strftime(
+            "%Y-%m-%d %H:%M:%S", time.localtime()
+        )
 
 def after_model(callback_context: CallbackContext, llm_response: LlmResponse) -> None:
     """Callback function that processes the LLM response after generation.

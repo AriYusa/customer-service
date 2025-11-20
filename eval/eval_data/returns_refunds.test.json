@@ -1,0 +1,605 @@
+{
+  "eval_set_id": "returns_refunds_test_set",
+  "name": "Returns and Refunds Test Cases for Alice",
+  "description": "Comprehensive test cases for returns and refunds scenarios with Alice (cust-1)",
+  "eval_cases": [
+    {
+      "eval_id": "damaged_vinyl_ord1",
+      "conversation": [
+        {
+          "invocation_id": "e-damaged-vinyl-001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "I received order ord-1 but the VP Vinyl Record arrived damaged"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I'm sorry to hear about the damaged vinyl record. To help you with this, could you please provide photos or video of the damage?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_order_details",
+                "args": {
+                  "order_id": "ord-1"
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731020000.0
+        },
+        {
+          "invocation_id": "e-damaged-vinyl-002",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Here are the photos showing the scratches on the vinyl"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Thank you for providing the photos. I can see the damage to your vinyl record. I can offer you either a partial refund or a full replacement. Which would you prefer?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "check_attachments",
+                "args": {
+                  "order_id": "ord-1",
+                  "problem_type": "scratches vinyl"
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731020100.0
+        },
+        {
+          "invocation_id": "e-damaged-vinyl-003",
+          "user_content": {
+            "parts": [
+              {
+                "text": "I'll take the replacement please"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Perfect! I've created a replacement order and a prepaid return label for the damaged vinyl. Your replacement should arrive within 3-5 business days."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "create_replacement_order",
+                "args": {
+                  "customer_id": "cust-1",
+                  "item_id": "123"
+                }
+              },
+              {
+                "name": "create_prepaid_label",
+                "args": {
+                  "customer_id": "cust-1"
+                }
+              },
+              {
+                "name": "log_issue",
+                "args": {
+                  "order_id": "ord-1",
+                  "issue_class": "manufacturing_defect_or_shipping_damage",
+                  "resolution": "replacement_with_return",
+                  "refund_amount": 0.0
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731020200.0
+        }
+      ],
+      "session_input": {
+        "app_name": "customer_service",
+        "user_id": "cust-1"
+      }
+    },
+    {
+      "eval_id": "wrong_item_ord2",
+      "conversation": [
+        {
+          "invocation_id": "e-wrong-item-001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "I got the wrong item in order ord-2. I ordered a vinyl but received a CD"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I apologize for this error. Since you received the wrong item, I can offer you a full refund without requiring you to return the CD. Would you like to proceed with the refund?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_order_details",
+                "args": {
+                  "order_id": "ord-2"
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731030000.0
+        },
+        {
+          "invocation_id": "e-wrong-item-002",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Yes please, issue the refund"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I've processed a full refund of $25.98 to your original payment method. The funds should appear in your account within 3-5 business days. You can keep the CD that was sent by mistake."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "issue_instant_refund",
+                "args": {
+                  "customer_id": "cust-1",
+                  "amount": 25.98
+                }
+              },
+              {
+                "name": "log_issue",
+                "args": {
+                  "order_id": "ord-2",
+                  "issue_class": "wrong_item_received",
+                  "resolution": "refund_without_return",
+                  "refund_amount": 25.98
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731030100.0
+        }
+      ],
+      "session_input": {
+        "app_name": "customer_service",
+        "user_id": "cust-1"
+      }
+    },
+    {
+      "eval_id": "changed_mind_ord3",
+      "conversation": [
+        {
+          "invocation_id": "e-changed-mind-001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "I want to return order ord-3. I changed my mind and haven't opened it"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I understand you'd like to return The Beatles - Abbey Road Vinyl from order ord-3. Since it's unopened, you're eligible for a full refund. I'll create a prepaid return label for you. Once we receive the item back, we'll process your refund of $32.99."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_order_details",
+                "args": {
+                  "order_id": "ord-3"
+                }
+              },
+              {
+                "name": "create_prepaid_label",
+                "args": {
+                  "customer_id": "cust-1"
+                }
+              },
+              {
+                "name": "log_issue",
+                "args": {
+                  "order_id": "ord-3",
+                  "issue_class": "changed_mind_sealed_unopened",
+                  "resolution": "refund_with_return",
+                  "refund_amount": 32.99
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731040000.0
+        }
+      ],
+      "session_input": {
+        "app_name": "customer_service",
+        "user_id": "cust-1"
+      }
+    },
+    {
+      "eval_id": "defective_cd_multiple_items_ord1",
+      "conversation": [
+        {
+          "invocation_id": "e-defective-cd-001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "The Louis Armstrong CD from my order ord-1 won't play. It seems defective"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I'm sorry to hear about the defective Louis Armstrong CD. I see that order ord-1 also included a VP Vinyl Record. Are you satisfied with the vinyl, or do you have issues with that item as well?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_order_details",
+                "args": {
+                  "order_id": "ord-1"
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731050000.0
+        },
+        {
+          "invocation_id": "e-defective-cd-002",
+          "user_content": {
+            "parts": [
+              {
+                "text": "The vinyl is fine, just the CD is the problem"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I understand. For the defective CD, I can offer you either a replacement or a partial refund of $13.45. Which would you prefer?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_product_details",
+                "args": {
+                  "product_id": "2o972"
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731050100.0
+        },
+        {
+          "invocation_id": "e-defective-cd-003",
+          "user_content": {
+            "parts": [
+              {
+                "text": "I'll take the refund"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I've processed a refund of $13.45 for the defective CD. The funds will appear in your account within 3-5 business days. I'll also create a prepaid return label so you can send back the defective CD."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "issue_instant_refund",
+                "args": {
+                  "customer_id": "cust-1",
+                  "amount": 13.45
+                }
+              },
+              {
+                "name": "create_prepaid_label",
+                "args": {
+                  "customer_id": "cust-1"
+                }
+              },
+              {
+                "name": "log_issue",
+                "args": {
+                  "order_id": "ord-1",
+                  "issue_class": "manufacturing_defect_or_shipping_damage",
+                  "resolution": "refund_with_return",
+                  "refund_amount": 13.45
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731050200.0
+        }
+      ],
+      "session_input": {
+        "app_name": "customer_service",
+        "user_id": "cust-1"
+      }
+    },
+    {
+      "eval_id": "full_refund_without_order_id",
+      "conversation": [
+        {
+          "invocation_id": "e-no-order-id-001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "I need to return a vinyl I bought but I don't have the order number"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I can help you find the order. Can you tell me which vinyl record you purchased or approximately when you ordered it?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731060000.0
+        },
+        {
+          "invocation_id": "e-no-order-id-002",
+          "user_content": {
+            "parts": [
+              {
+                "text": "It was The Beatles Abbey Road vinyl, delivered recently"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I found your order! It's order ord-3 with The Beatles - Abbey Road Vinyl LP, delivered recently. How can I help you with this order?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_order_history",
+                "args": {
+                  "customer_id": "cust-1"
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731060100.0
+        },
+        {
+          "invocation_id": "e-no-order-id-003",
+          "user_content": {
+            "parts": [
+              {
+                "text": "It has some scratches. Can I get a refund?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I'm sorry about the scratches. Could you please provide photos of the damage so I can assist you better?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731060200.0
+        },
+        {
+          "invocation_id": "e-no-order-id-004",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Here are the photos"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Thank you for the photos. I can see there's minor damage to the vinyl. I can offer you either a partial refund or a replacement. Which would you prefer?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "check_attachments",
+                "args": {
+                  "order_id": "ord-3",
+                  "problem_type": "scratches"
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731060300.0
+        }
+      ],
+      "session_input": {
+        "app_name": "customer_service",
+        "user_id": "cust-1"
+      }
+    },
+    {
+      "eval_id": "missing_components_ord1",
+      "conversation": [
+        {
+          "invocation_id": "e-missing-parts-001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "My order ord-1 arrived but the CD case is missing the booklet"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I apologize that the CD booklet is missing from your Louis Armstrong Greatest Hits CD. Could you confirm if the CD itself plays correctly?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_order_details",
+                "args": {
+                  "order_id": "ord-1"
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731070000.0
+        },
+        {
+          "invocation_id": "e-missing-parts-002",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Yes, the CD works fine, just the booklet is missing"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Since only the booklet is missing and the CD plays correctly, I can offer you a partial refund of $3.00 for the inconvenience. Would that be acceptable?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731070100.0
+        },
+        {
+          "invocation_id": "e-missing-parts-003",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Yes, that works for me"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Great! I've processed a partial refund of $3.00. The funds will appear in your account within 3-5 business days."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "issue_instant_refund",
+                "args": {
+                  "customer_id": "cust-1",
+                  "amount": 3.0
+                }
+              },
+              {
+                "name": "log_issue",
+                "args": {
+                  "order_id": "ord-1",
+                  "issue_class": "missing_components",
+                  "resolution": "refund_without_return",
+                  "refund_amount": 3.0
+                }
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1731070200.0
+        }
+      ],
+      "session_input": {
+        "app_name": "customer_service",
+        "user_id": "cust-1"
+      }
+    }
+  ]
+}

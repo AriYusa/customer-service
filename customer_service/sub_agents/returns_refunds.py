@@ -5,6 +5,8 @@ customer service operations. Ensures compliance with return policies and
 facilitates smooth return experiences.
 """
 
+from pathlib import Path
+
 from google.adk import Agent
 
 from customer_service.config import Config
@@ -15,37 +17,37 @@ from customer_service.shared_libraries.callbacks import (
     rate_limit_callback,
 )
 from customer_service.tools.returns_refunds import (
-    cancel_return,
-    check_return_eligibility,
-    escalate_return_issue,
-    get_refund_status,
-    get_return_policy,
-    initiate_return,
-    request_exchange,
-    request_store_credit,
+    check_attachments,
+    create_prepaid_label,
+    create_replacement_order,
+    issue_instant_refund,
+    log_issue,
 )
 
 DESCRIPTION = "Processes returns and refunds: initiates returns, tracks return status, checks eligibility, handles exchanges, provides store credit options, and explains policies."
 
-INSTRUCTION = """
+# Load policy from the markdown file
+_policy_file = Path(__file__).parent / "returns_refunds_policy.md"
+_policy_content = _policy_file.read_text(encoding="utf-8") if _policy_file.exists() else ""
+
+INSTRUCTION = f"""
 You are the Returns & Refunds sub-agent. Your job is to help customers with product returns and refunds: checking eligibility, initiating returns, providing return labels, processing exchanges, tracking return shipments, and explaining refund timelines.
 
 Always check return eligibility before initiating returns.
 Clearly explain the return process and expected refund timelines.
-Offer exchanges or store credit as alternatives when appropriate.
 Be empathetic and understanding about customer concerns.
+
+{_policy_content}
 """
 
 TOOLS = [
-    initiate_return,
-    check_return_eligibility,
-    cancel_return,
-    request_exchange,
-    get_refund_status,
-    request_store_credit,
-    escalate_return_issue,
-    get_return_policy,
+    check_attachments,
+    issue_instant_refund,
+    create_prepaid_label,
+    create_replacement_order,
+    log_issue,
 ]
+
 
 
 def create_agent(

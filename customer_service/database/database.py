@@ -101,7 +101,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS orders (
             id TEXT PRIMARY KEY,
             customer_id TEXT NOT NULL,
-            date TEXT NOT NULL,
+            date_ordered TEXT NOT NULL,
+            date_delivered TEXT,
             total REAL NOT NULL,
             status TEXT NOT NULL DEFAULT 'processing',
             FOREIGN KEY (customer_id) REFERENCES customers(id)
@@ -291,14 +292,53 @@ def populate_sample_data():
         """)
 
         # Add sample orders
-        cursor.execute("""
-        INSERT INTO orders (id, customer_id, date, total, status)
-        VALUES 
-            ('ord-1', 'cust-1', '2024-06-01', 39.43, 'delivered'),
-            ('ord-2', 'cust-2', '2024-05-15', 47.93, 'delivered'),
-            ('ord-3', 'cust-2', '2024-07-10', 76.92, 'shipped'),
-            ('ord-4', 'cust-1', '2024-10-25', 62.93, 'processing')
-        """)
+        from datetime import date, timedelta
+
+        today = date.today()
+        orders = [
+            (
+                "ord-1",
+                "cust-1",
+                "2025-06-01",
+                (today - timedelta(days=3)).isoformat(),
+                39.43,
+                "delivered",
+            ),
+            (
+                "ord-2",
+                "cust-1",
+                "2025-08-10",
+                (today - timedelta(days=40)).isoformat(),
+                25.98,
+                "delivered",
+            ),
+            (
+                "ord-3",
+                "cust-1",
+                "2025-08-26",
+                (today - timedelta(days=8)).isoformat(),
+                32.99,
+                "delivered",
+            ),
+            (
+                "ord-4",
+                "cust-2",
+                "2025-05-15",
+                (today - timedelta(days=8)).isoformat(),
+                47.93,
+                "delivered",
+            ),
+            ("ord-5", "cust-2", "2025-07-10", None, 15.99, "shipped"),
+            ("ord-6", "cust-1", "2025-10-25", None, 62.93, "processing"),
+        ]
+
+        cursor.executemany(
+            """
+        INSERT INTO orders (id, customer_id, date_ordered, date_delivered, total, status)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+            orders,
+        )
 
         # Add order items
         cursor.execute("""
@@ -306,13 +346,14 @@ def populate_sample_data():
         VALUES 
             ('ord-1', '123', 1),
             ('ord-1', '2o972', 1),
-            ('ord-2', '456', 1),
-            ('ord-2', '457', 1),
-            ('ord-3', '789', 1),
-            ('ord-3', '101', 1),
-            ('ord-3', '102', 1),
+            ('ord-2', '123', 1),
+            ('ord-3', '456', 1),
             ('ord-4', '456', 1),
-            ('ord-4', '789', 1)
+            ('ord-4', '457', 1),
+            ('ord-5', '789', 1),
+            ('ord-5', '101', 1),
+            ('ord-6', '456', 1),
+            ('ord-6', '789', 1)
         """)
 
         conn.commit()

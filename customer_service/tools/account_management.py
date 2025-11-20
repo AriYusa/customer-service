@@ -46,31 +46,32 @@ def _get_customer_record(customer_id: str) -> CustomerRecord | None:
         cursor.execute("SELECT * FROM orders WHERE customer_id = ?", (customer_id,))
         orders = []
         for order in cursor.fetchall():
-            # Fetch order items from order_items and products tables
-            cursor.execute("""
-                SELECT oi.product_id, p.name, oi.quantity, p.unit_price
-                FROM order_items oi
-                JOIN products p ON oi.product_id = p.id
-                WHERE oi.order_id = ?
-            """, (order["id"],))
+            # # Fetch order items from order_items and products tables
+            # cursor.execute("""
+            #     SELECT oi.product_id, p.name, oi.quantity, p.unit_price
+            #     FROM order_items oi
+            #     JOIN products p ON oi.product_id = p.id
+            #     WHERE oi.order_id = ?
+            # """, (order["id"],))
             
-            items = [
-                {
-                    "product_id": item["product_id"],
-                    "name": item["name"],
-                    "quantity": item["quantity"],
-                    "unit_price": item["unit_price"]
-                }
-                for item in cursor.fetchall()
-            ]
+            # items = [
+            #     {
+            #         "product_id": item["product_id"],
+            #         "name": item["name"],
+            #         "quantity": item["quantity"],
+            #         "unit_price": item["unit_price"]
+            #     }
+            #     for item in cursor.fetchall()
+            # ]
             
             orders.append(
                 Order(
                     id=order["id"],
-                    date=order["date"],
+                    date_ordered=order["date_ordered"],
+                    date_delivered=order.get("date_delivered", ""),
                     total=order["total"],
                     status=order["status"],
-                    items=items,
+                    # items=items,
                 )
             )
 
@@ -81,7 +82,7 @@ def _get_customer_record(customer_id: str) -> CustomerRecord | None:
             profile=json.loads(customer["profile"]),
             addresses=addresses,
             payment_methods=payment_methods,
-            # orders=orders,
+            orders=orders,
             loyalty=LoyaltyBalance(**json.loads(customer["loyalty"])),
             subscriptions=json.loads(customer["subscriptions"]),
             locked=customer["locked"],

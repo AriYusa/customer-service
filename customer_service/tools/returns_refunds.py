@@ -6,227 +6,153 @@ import uuid
 from datetime import datetime, timedelta
 
 from ..datamodels.returns import (
-    ContactInfo,
-    EscalationResult,
-    ExchangeResult,
-    RefundBreakdown,
-    RefundStatus,
-    ReturnCancellationResult,
-    ReturnEligibility,
-    ReturnInitiationResult,
-    ReturnPolicy,
-    ReturnStatusEvent,
-    ReturnTrackingInfo,
-    StoreCreditResult,
+    AttachmentCheckResult,
+    InstantRefundResult,
+    PrepaidLabelResult,
+    ReplacementOrderResult,
 )
 
 
-def initiate_return(
-    order_id: str, items: list[dict], reason: str
-) -> ReturnInitiationResult:
-    """Initiate a return request for order items.
+def check_attachments(order_id: str, problem_type: str) -> dict:
+    """Check customer-submitted photo/video attachments for an order.
+
+    This is a mock function that simulates checking if a customer has provided
+    photo or video evidence of their issue (defect, damage, wrong item, etc.)
+    and whether those attachments confirm the reported problem.
 
     Args:
         order_id: The unique identifier of the order
-        items: List of items to return, each containing:
-            - product_id: Product identifier
-            - quantity: Number of units to return
-            - reason: Specific reason for this item
-        reason: Overall reason for return (defective, wrong_item, not_as_described, etc.)
+        problem_type: A short description (3-4 words) of the reported problem
 
     Returns:
-        ReturnInitiationResult with return details
+        dict with attachment check results
     """
-    # Mock return initiation
-    return_id = f"return-{uuid.uuid4()}"
+    return {
+        # "damage_level": "minor",
+        problem_type.lower().replace(" ", "_"): True,
+        # "missing_parts": False,
+    }
 
-    # Calculate estimated refund (mock)
-    estimated_refund = sum(item.get("quantity", 1) * 25.00 for item in items)
 
-    return ReturnInitiationResult(
+def issue_instant_refund(customer_id: str, amount: float) -> InstantRefundResult:
+    """Issue an instant refund to customer without requiring item return.
+
+    This function processes an immediate refund to the customer's original
+    payment method. Used for cases where the customer can keep the item
+    (severe defects, wrong items, etc.).
+
+    Args:
+        customer_id: The unique identifier of the customer
+        amount: The refund amount in dollars
+
+    Returns:
+        InstantRefundResult with refund processing details
+    """
+    # Mock implementation
+    transaction_id = f"refund-{uuid.uuid4()}"
+
+    return InstantRefundResult(
         success=True,
-        return_id=return_id,
-        return_label_url=f"https://example.com/returns/{return_id}/label.pdf",
-        instructions="Pack items securely, attach label, and drop off at any carrier location",
-        estimated_refund=round(estimated_refund, 2),
-        refund_eta="5-7 business days after receiving items",
+        customer_id=customer_id,
+        refund_amount=round(amount, 2),
+        transaction_id=transaction_id,
+        message=f"Instant refund of ${amount:.2f} has been processed. Funds will appear in customer's account within 3-5 business days.",
     )
 
 
-def check_return_eligibility(order_id: str, product_id: str) -> ReturnEligibility:
-    """Check if an item is eligible for return.
+def create_prepaid_label(customer_id: str) -> PrepaidLabelResult:
+    """Create a prepaid return shipping label for the customer.
+
+    Generates a prepaid shipping label that the customer can use to return
+    items at no cost to them. The label includes tracking information.
 
     Args:
-        order_id: The unique identifier of the order
-        product_id: The product identifier to check
+        customer_id: The unique identifier of the customer
 
     Returns:
-        ReturnEligibility with eligibility details
+        PrepaidLabelResult with label details and tracking information
     """
-    # Mock eligibility check
-    order_date = datetime(2025, 10, 1)
-    days_since_order = (datetime.now() - order_date).days
-    return_window = 30
-    days_remaining = return_window - days_since_order
+    # Mock implementation
+    tracking_number = f"1Z{uuid.uuid4().hex[:16].upper()}"
 
-    eligible = days_remaining > 0
-
-    return ReturnEligibility(
-        eligible=eligible,
-        reason="Within return window" if eligible else "Return window expired",
-        return_window_days=max(0, days_remaining),
-        conditions=[
-            "Item must be unused and in original packaging",
-            "All accessories and documentation must be included",
-            "Item must not be damaged or altered",
-        ],
-        exceptions="Final sale items and opened perishables cannot be returned",
+    return PrepaidLabelResult(
+        success=True,
+        customer_id=customer_id,
+        tracking_number=tracking_number,
+        message=f"Prepaid return label created. Tracking: {tracking_number}.",
     )
 
 
-def cancel_return(return_id: str) -> ReturnCancellationResult:
-    """Cancel a return request.
+def create_replacement_order(customer_id: str, item_id: str) -> ReplacementOrderResult:
+    """Create a replacement order for a defective or incorrect item.
+
+    Creates a new order to send a replacement item to the customer at no
+    additional charge. Can be used with or without requiring return of
+    the original item.
 
     Args:
-        return_id: The unique return request identifier to cancel
+        customer_id: The unique identifier of the customer
+        item_id: The product identifier for the replacement item
 
     Returns:
-        ReturnCancellationResult with cancellation status
+        ReplacementOrderResult with new order details
     """
-    # Mock return cancellation
-    return ReturnCancellationResult(
+    # Mock implementation
+    new_order_id = f"ord-replacement-{uuid.uuid4()}"
+
+    return ReplacementOrderResult(
         success=True,
-        message="Return request cancelled successfully. You may keep the items.",
-    )
-
-
-def request_exchange(order_id: str, items: list[dict]) -> ExchangeResult:
-    """Request to exchange items for different products or variants.
-
-    Args:
-        order_id: The unique identifier of the original order
-        items: List of items to exchange, each containing:
-            - original_product_id: Product being returned
-            - new_product_id: Replacement product desired
-            - quantity: Number of units
-            - reason: Reason for exchange
-
-    Returns:
-        ExchangeResult with exchange details
-    """
-    exchange_id = f"exchange-{uuid.uuid4()}"
-    new_order_id = f"ord-{uuid.uuid4()}"
-
-    # Mock price calculation
-    price_difference = 5.50  # Example: new items cost $5.50 more
-
-    return ExchangeResult(
-        success=True,
-        exchange_id=exchange_id,
-        return_label_url=f"https://example.com/exchanges/{exchange_id}/label.pdf",
-        price_difference=price_difference,
         new_order_id=new_order_id,
-        estimated_delivery="2025-10-30",
     )
 
 
-def get_refund_status(order_id: str) -> RefundStatus:
-    """Get the status of a refund for an order.
+def log_issue(
+    order_id: str, issue_class: str, resolution: str, refund_amount: float = 0.0
+) -> None:
+    """Log a return/refund issue for tracking and analytics purposes.
+
+    Records the issue type, resolution method, and refund amount for an order.
+    This data is used for quality control, trend analysis, and customer service
+    improvement.
 
     Args:
         order_id: The unique identifier of the order
+        issue_class: The type of issue (from IssueClass enum)
+        resolution: The resolution method applied (from Resolution enum)
+        refund_amount: The refund amount in dollars (0 if no refund)
+
+    IssueClass options:
+    "manufacturing_defect_or_shipping_damage"
+    "wrong_item_received"
+    "missing_components"
+    "changed_mind_sealed_unopened"
+    "other"
+
+    Resolution options:
+    "refund_without_return"
+    "refund_with_return"
+    "replacement_with_return"
+    "replacement_without_return"
+    "declined"
 
     Returns:
-        RefundStatus with refund details
+        None
     """
-    # Mock refund status
-    return RefundStatus(
-        order_id=order_id,
-        refund_status="completed",
-        refund_amount=25.98,
-        refund_method="original_payment",
-        refund_date="2025-10-23",
-        expected_arrival="2025-10-28",
-        breakdown=RefundBreakdown(items=25.98, shipping=0.0, tax=0.0, total=25.98),
-    )
+    # Mock implementation - in production, this would write to a database or logging system
+    timestamp = datetime.now().isoformat()
 
+    log_entry = {
+        "timestamp": timestamp,
+        "order_id": order_id,
+        "issue_class": issue_class,
+        "resolution": resolution,
+        "refund_amount": round(refund_amount, 2),
+    }
 
-def request_store_credit(order_id: str, items: list[dict]) -> StoreCreditResult:
-    """Request store credit instead of refund to original payment method.
+    # In production, this would be saved to a database
+    print(f"[ISSUE LOG] {log_entry}")
 
-    Args:
-        order_id: The unique identifier of the order
-        items: List of items to return for store credit
-
-    Returns:
-        StoreCreditResult with store credit details
-    """
-    # Mock store credit calculation
-    base_amount = 25.98
-    bonus_percentage = 10  # 10% bonus for store credit
-    bonus_amount = base_amount * (bonus_percentage / 100)
-    total_credit = base_amount + bonus_amount
-
-    credit_code = f"CREDIT-{uuid.uuid4().hex[:8].upper()}"
-
-    return StoreCreditResult(
-        success=True,
-        credit_amount=round(base_amount, 2),
-        bonus_percentage=bonus_percentage,
-        total_credit=round(total_credit, 2),
-        credit_code=credit_code,
-        expiration_date=(datetime.now() + timedelta(days=365)).strftime("%Y-%m-%d"),
-    )
-
-
-def escalate_return_issue(return_id: str, issue_description: str) -> EscalationResult:
-    """Escalate a return issue to a supervisor or specialized team.
-
-    Args:
-        return_id: The return request identifier
-        issue_description: Detailed description of the issue
-
-    Returns:
-        EscalationResult with escalation details
-    """
-    ticket_id = f"ticket-{uuid.uuid4()}"
-
-    return EscalationResult(
-        success=True,
-        ticket_id=ticket_id,
-        assigned_to="Returns Specialist Team",
-        priority="high",
-        expected_response="24 hours",
-    )
-
-
-def get_return_policy() -> ReturnPolicy:
-    """Get detailed information about the return policy.
-
-    Returns:
-        ReturnPolicy with complete policy details
-    """
-    return ReturnPolicy(
-        return_window_days=30,
-        refund_method="Original payment method or store credit",
-        restocking_fee=0.0,
-        conditions=[
-            "Items must be unused and in original packaging",
-            "Include all accessories and documentation",
-            "Provide proof of purchase",
-            "Items must be undamaged",
-        ],
-        non_returnable_items=[
-            "Opened plant seeds",
-            "Live plants",
-            "Perishable items",
-            "Final sale items",
-            "Gift cards",
-        ],
-        exchange_policy="Free exchanges within 30 days for different size, color, or product",
-        contact_info=ContactInfo(
-            phone="1-800-RETURNS",
-            email="returns@example.com",
-            hours="Mon-Fri 9AM-6PM EST",
-        ),
-    )
+    # Could also write to a file for persistence in this mock
+    # with open('issue_log.json', 'a') as f:
+    #     json.dump(log_entry, f)
+    #     f.write('\n')

@@ -142,7 +142,7 @@ def get_invoice(order_id: str) -> Invoice:
         return Invoice(
             invoice_id=f"INV-{order_id}",
             order_id=order_id,
-            date=order["date"],
+            date=order["date_ordered"],
             items=items,
             subtotal=round(subtotal, 2),
             tax=round(tax, 2),
@@ -252,7 +252,7 @@ def get_billing_history(customer_id: str, months: int = 6) -> list[BillingRecord
     with database.get_db() as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT * FROM orders WHERE customer_id = ? ORDER BY date DESC",
+            "SELECT * FROM orders WHERE customer_id = ? ORDER BY date_ordered DESC",
             (customer_id,),
         )
         orders = cursor.fetchall()
@@ -261,7 +261,7 @@ def get_billing_history(customer_id: str, months: int = 6) -> list[BillingRecord
         for order in orders:
             billing_records.append(
                 BillingRecord(
-                    date=order["date"],
+                    date=order["date_ordered"],
                     description=f"Order {order['id']}",
                     amount=order["total"],
                     status="paid",

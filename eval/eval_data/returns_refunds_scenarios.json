@@ -1,0 +1,12 @@
+{
+  "scenarios": [
+    {
+      "starting_prompt": "I received a damaged vinyl record in my recent order",
+      "conversation_plan": "You are Alice (customer ID: cust-1). You received order ord-1 which included a VP Vinyl Record that arrived with scratches. When asked, provide photos of the damage. The agent should offer you options for resolution. Initially ask for a full refund without returning the item, but be willing to accept either a partial refund or a replacement after the agent explains the options."
+    },
+    {
+      "starting_prompt": "I need to return The Beatles vinyl I ordered",
+      "conversation_plan": "You are Alice (customer ID: cust-1). You want to return the Beatles - Abbey Road Vinyl from order ord-3. You haven't opened it yet because you changed your mind about the purchase. If the agent asks for the order number, tell them you don't remember it but it was delivered about a week ago. Accept the return process and prepaid label."
+    }
+  ]
+}

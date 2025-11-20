@@ -102,12 +102,19 @@ class PaymentMethod(BaseModel):
 
 class Order(BaseModel):
     id: str
-    date: str
+    date_ordered: str
+    date_delivered: str = ""
     total: float
     status: str = "processing"
     items: list[OrderItemWithInfo] = []
     shipping_address: str = ""
     payment_method: str = ""
+
+    @field_validator('date_delivered', mode='before')
+    @classmethod
+    def convert_none_to_empty(cls, v):
+        return v if v is not None else ""
+
 
 
 class LoyaltyBalance(BaseModel):

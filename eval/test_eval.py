@@ -24,3 +24,13 @@ async def test_eval_simple():
         os.path.join(os.path.dirname(__file__), "eval_data/simple.test.json"),
         num_runs=1,
     )
+
+
+@pytest.mark.asyncio
+async def test_eval_returns_refunds():
+    """Test the agent's returns and refunds handling for Alice (cust-1)."""
+    await AgentEvaluator.evaluate(
+        "customer_service",
+        os.path.join(os.path.dirname(__file__), "eval_data/returns_refunds.test.json"),
+        num_runs=1,
+    )
