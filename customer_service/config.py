@@ -58,3 +58,10 @@ class Config(BaseSettings):
         
         # Default to returning the model name as-is (for Gemini)
         return model_name
+    
+    def get_check_attachments_response(self):
+        """Mock response for check_attachments tool."""
+        return {
+            "damage_level": "minor",
+            "missing_parts": False,
+        }

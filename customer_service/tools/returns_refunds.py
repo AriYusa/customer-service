@@ -11,6 +11,7 @@ from ..datamodels.returns import (
     PrepaidLabelResult,
     ReplacementOrderResult,
 )
+from customer_service.shared_libraries import callbacks
 
 
 def check_attachments(order_id: str, problem_type: str) -> dict:
@@ -27,12 +28,15 @@ def check_attachments(order_id: str, problem_type: str) -> dict:
     Returns:
         dict with attachment check results
     """
-    return {
-        # "damage_level": "minor",
-        problem_type.lower().replace(" ", "_"): True,
-        # "missing_parts": False,
-    }
+    state = callbacks.current_tool_state.get()
 
+    mock = state.get("check_attachments_response")
+    if mock:
+        return mock
+
+    return {
+        problem_type.lower().replace(" ", "_"): True,
+    }
 
 def issue_instant_refund(customer_id: str, amount: float) -> InstantRefundResult:
     """Issue an instant refund to customer without requiring item return.

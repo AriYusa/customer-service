@@ -1,3 +1,8 @@
+### Based on
+https://github.com/google/adk-docs/blob/main/docs/evaluate/index.md
+https://google.github.io/adk-docs/evaluate/criteria/
+https://google.github.io/adk-docs/evaluate/user-sim/#user-simulator-configuration
+
 ### Run Traditional Tests (Recommended for CI/CD)
 ```bash
 # Run just the returns/refunds tests
@@ -16,5 +21,5 @@ adk eval_set create customer_service returns_refunds_evalset
 adk eval_set add_eval_case customer_service returns_refunds_evalset --scenarios_file eval/eval_data/returns_refunds_scenarios.json --session_input_file eval/eval_data/session_input.json
 
 # Step 3: Run evaluation
-adk eval customer_service --config_file_path eval/eval_data/returns_refunds_usersim_config.json returns_refunds_evalset --print_detailed_results
+adk eval customer_service --config_file_path eval/eval_data/returns_refunds_usersim_config.json returns_refunds_evalset_sessions --print_detailed_results
 ```

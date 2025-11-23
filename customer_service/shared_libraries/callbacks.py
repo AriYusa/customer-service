@@ -4,6 +4,7 @@
 import inspect
 import logging
 import time
+import contextvars
 from typing import Any, get_type_hints
 
 from google.adk.agents.callback_context import CallbackContext
@@ -15,6 +16,7 @@ from google.adk.tools.tool_context import ToolContext
 from jsonschema import ValidationError
 from pydantic import BaseModel
 
+from customer_service.config import Config
 from customer_service.database.database import DEFAULT_CUSTOMER_ID
 from customer_service.tools.account_management import (
     CustomerRecord,
@@ -26,6 +28,11 @@ logger.setLevel(logging.DEBUG)
 
 RATE_LIMIT_SECS = 60
 RPM_QUOTA = 10
+
+# Context variable to hold the current tool's session state for access inside tools
+current_tool_state: contextvars.ContextVar[dict | None] = contextvars.ContextVar(
+    "current_tool_state", default=None
+)
 
 
 def rate_limit_callback(
@@ -224,6 +231,14 @@ def before_tool(tool: BaseTool, args: dict[str, Any], tool_context: CallbackCont
     # i make sure all values that the agent is sending to tools are lowercase
     lowercase_value(args)
 
+    # Expose the tool_context.state to the running tool via a contextvar so tools
+    # can access session-scoped mock data without the model seeing extra args.
+    try:
+        current_tool_state.set(tool_context.state)
+    except Exception:
+        # Best effort; do not fail the tool call if this cannot be set.
+        logger.debug("Could not set current_tool_state contextvar")
+
     # Several tools require customer_id as input. We don't want to rely
     # solely on the model picking the right customer id. We validate it.
     # Alternative: tools can fetch the customer_id from the state directly.
@@ -243,6 +258,10 @@ def before_tool(tool: BaseTool, args: dict[str, Any], tool_context: CallbackCont
         )
         args["agent_name"] = "customer_service_coordinator"
 
+
+    # Do not inject hidden/mock arguments into `args` here; prefer using the
+    # `current_tool_state` contextvar accessed by tool wrappers to avoid
+    # exposing extra parameters to the model.
     return None
 
 
@@ -261,6 +280,12 @@ def after_tool(
     #         logger.debug("Applying discount to the cart")
     #         # Actually make changes to the cart
 
+    # Clear the contextvar after tool execution to avoid leaking state
+    try:
+        current_tool_state.set(None)
+    except Exception:
+        logger.debug("Could not clear current_tool_state contextvar")
+
     return None
 
 
@@ -275,6 +300,11 @@ def before_agent(callback_context: InvocationContext):
         callback_context.state["datetime_now"] = time.strftime(
             "%Y-%m-%d %H:%M:%S", time.localtime()
         )
+    
+     # Set the mocked response in the state for use in the tool
+    if "check_attachments_response" not in callback_context.state and mocked_check_attachments_response:
+        mocked_check_attachments_response = Config().get_check_attachments_response()
+        callback_context.state["check_attachments_response"] = mocked_check_attachments_response
 
 def after_model(callback_context: CallbackContext, llm_response: LlmResponse) -> None:
     """Callback function that processes the LLM response after generation.
