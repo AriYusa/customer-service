@@ -74,7 +74,7 @@ def create_agent(
 
     configs = configs or Config()
     agent_name = "account_management"
-    agent_model = model or configs.agent_settings.model
+    agent_model = configs.get_model_for_agent(model)
 
     return Agent(
         model=agent_model,

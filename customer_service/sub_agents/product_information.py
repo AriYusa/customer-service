@@ -50,8 +50,8 @@ def create_agent(
             google.adk.Agent: configured agent instance.
     """
     configs = configs or Config()
-    agent_name = name or "product_information"
-    agent_model = model or configs.agent_settings.model
+    agent_name = "product_information"
+    agent_model = configs.get_model_for_agent(model)
 
     return Agent(
         model=agent_model,

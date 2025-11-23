@@ -63,7 +63,7 @@ Your job is to understand customer inquiries and determine which sub-agent is be
 """
 
 root_agent = Agent(
-    model=configs.agent_settings.model,
+    model=configs.get_model_for_agent(),
     global_instruction=GLOBAL_INSTRUCTION,
     description="Routing coordinator for customer service sub-agents. Has access to all sub-agent tools descriptions. Can assist with getting addifitional information by routing to the appropriate sub-agent.",
     instruction=COORDINATOR_INSTRUCTION,
@@ -84,10 +84,3 @@ root_agent = Agent(
 )
 
 
-## TODO 
-# replicate eval process to uderstand how to test agent performance
-# replace to Antrophic model
-# add more clear insrudtion to what functions to call
-# think how to mock check attachment function
-# think how to add evals for right tool calls
-# Check why datetime in invocation context state not passed to subagents

@@ -60,8 +60,8 @@ def create_agent(
         google.adk.Agent: configured agent instance.
     """
     configs = configs or Config()
-    agent_name = name or "payment_billing"
-    agent_model = model or configs.agent_settings.model
+    agent_name = "payment_billing"
+    agent_model = configs.get_model_for_agent(model)
 
     return Agent(
         model=agent_model,

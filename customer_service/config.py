@@ -14,7 +14,8 @@ class AgentModel(BaseModel):
     """Agent model settings."""
 
     name: str = Field(default="customer_service_coordinator")
-    model: str = Field(default="gemini-2.5-flash")
+    # model: str = Field(default="gemini-2.5-flash")
+    model: str = Field(default="anthropic/claude-3-7-sonnet-20250219")
 
 
 class Config(BaseSettings):
@@ -32,3 +33,28 @@ class Config(BaseSettings):
     CLOUD_LOCATION: str = Field(default="us-central1")
     GENAI_USE_VERTEXAI: str = Field(default="1")
     API_KEY: str | None = Field(default="")
+    ANTHROPIC_API_KEY: str | None = Field(default="", env_prefix="")
+    OPENAI_API_KEY: str | None = Field(default="", env_prefix="")
+
+    def get_model_for_agent(self, model_override: str | None = None):
+        """Get the model configuration for an agent.
+        
+        If the model name starts with 'anthropic/' or 'openai/', wraps it with LiteLlm.
+        Otherwise returns the model name directly for use with Gemini.
+        
+        Args:
+            model_override: Optional model override string.
+            
+        Returns:
+            Either a string (for Gemini) or LiteLlm instance (for other providers).
+        """
+        from google.adk.models.lite_llm import LiteLlm
+        
+        model_name = model_override or self.agent_settings.model
+        
+        # Check if it's an Anthropic or OpenAI model
+        if model_name.startswith(("anthropic/", "openai/")):
+            return LiteLlm(model=model_name)
+        
+        # Default to returning the model name as-is (for Gemini)
+        return model_name

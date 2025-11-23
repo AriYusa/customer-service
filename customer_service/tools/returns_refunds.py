@@ -60,7 +60,7 @@ def issue_instant_refund(customer_id: str, amount: float) -> InstantRefundResult
     )
 
 
-def create_prepaid_label(customer_id: str) -> PrepaidLabelResult:
+def create_prepaid_label(customer_id: str, item_ids: list[str]) -> PrepaidLabelResult:
     """Create a prepaid return shipping label for the customer.
 
     Generates a prepaid shipping label that the customer can use to return
@@ -68,6 +68,7 @@ def create_prepaid_label(customer_id: str) -> PrepaidLabelResult:
 
     Args:
         customer_id: The unique identifier of the customer
+        item_ids: List of item IDs to be returned with this label
 
     Returns:
         PrepaidLabelResult with label details and tracking information
@@ -107,7 +108,7 @@ def create_replacement_order(customer_id: str, item_id: str) -> ReplacementOrder
 
 
 def log_issue(
-    order_id: str, issue_class: str, resolution: str, refund_amount: float = 0.0
+    order_id: str, issue_class: str, resolution: str, item_ids: list[str], refund_amount: float = 0.0
 ) -> None:
     """Log a return/refund issue for tracking and analytics purposes.
 
@@ -119,6 +120,7 @@ def log_issue(
         order_id: The unique identifier of the order
         issue_class: The type of issue (from IssueClass enum)
         resolution: The resolution method applied (from Resolution enum)
+        item_ids: List of item IDs associated with this issue
         refund_amount: The refund amount in dollars (0 if no refund)
 
     IssueClass options:
@@ -146,6 +148,7 @@ def log_issue(
         "order_id": order_id,
         "issue_class": issue_class,
         "resolution": resolution,
+        "item_ids": item_ids,
         "refund_amount": round(refund_amount, 2),
     }
 
